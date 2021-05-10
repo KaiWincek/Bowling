@@ -1,64 +1,55 @@
 package main.java.company;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Game {
 
     public int calculateScore(String scorecard){
-        String [][] rolls = new String[21][2];
         int score = 0;
-        int numberOfRolls = 0;
+        List<Roll> rollList = fillRollList(scorecard);
 
-        initiateRollArray(rolls);
-        fillRollArray(scorecard, rolls);
-        replaceStrikeAndZeroesWithValues(rolls);
-        replaceSparesWithValues(rolls);
-
-        for (int i = 0; i < scorecard.length(); i++){
-            numberOfRolls++;
-            score += Integer.parseInt(rolls[i][0]);
-            if (rolls[i][0].equals("10") && rolls[i][1].equals("1") && numberOfRolls < scorecard.length()-2){
-                score += (Integer.parseInt(rolls[i+1][0]) + Integer.parseInt(rolls[i+2][0]));
+        for (int i = 0; i < rollList.size(); i++){
+            Roll currentRoll = rollList.get(i);
+            switch (currentRoll.getRollType()){
+                case SPARE:
+                    score += currentRoll.getValue() + rollList.get(i+1).getValue();
+                    break;
+                case STRIKE:
+                    score += currentRoll.getValue() + rollList.get(i+1).getValue() + rollList.get(i+2).getValue();
+                    break;
+                default:
+                    score += currentRoll.getValue();
             }
-            if (rolls[i][1].equals("2") && numberOfRolls == scorecard.length()-1){
-                score -= Integer.parseInt(rolls[i+1][0]);
+            if (
+                    (currentRoll.getRollType() == RollType.STRIKE && i >= rollList.size()-3) ||
+                    (currentRoll.getRollType() == RollType.SPARE && i >= rollList.size()-2)
+            ){
+                return score;
             }
         }
-
         return score;
     }
 
-    private void replaceSparesWithValues(String[][] rolls) {
-        for (int i = 0; i < rolls.length; i++){
-            if (rolls[i][0].equals("/")){
-                int scoreOfSpare = (10 - Integer.parseInt(rolls[i-1][0]) + Integer.parseInt(rolls[i+1][0]));
-                rolls[i][0] = rolls[i][0].replace("/", Integer.toString(scoreOfSpare));
-                rolls[i][1] = rolls[i][1].replace("0", "2");
-            }
-        }
-    }
-
-    private void replaceStrikeAndZeroesWithValues(String[][] rolls) {
-        for (int i = 0; i < rolls.length; i++){
-            if (rolls[i][0].equals("x")){
-                rolls[i][0] = rolls[i][0].replace("x", "10");
-                rolls[i][1] = rolls[i][1].replace("0", "1");
-            } else if (rolls[i][0].equals("-")){
-                rolls[i][0] = rolls[i][0].replace("-", "0");
-            }
-        }
-    }
-
-    private String[][] fillRollArray(String scorecard, String[][] rolls) {
+    private List<Roll> fillRollList(String scorecard){
+        List<Roll> rollList = new ArrayList<>();
         for (int i = 0; i < scorecard.length(); i++){
-            rolls[i][0] = rolls[i][0].concat(scorecard.charAt(i) + "");
+            char c = scorecard.charAt(i);
+            switch (c){
+                case '/' :
+                    rollList.add(new Roll(10 - rollList.get(i-1).getValue(), RollType.SPARE));
+                    break;
+                case 'x' :
+                    rollList.add(new Roll(10, RollType.STRIKE));
+                    break;
+                case '-' :
+                    rollList.add(new Roll(0, RollType.VALUE));
+                    break;
+                default:
+                    rollList.add(new Roll(Character.getNumericValue(c), RollType.VALUE));
+                    break;
+            }
         }
-        return rolls;
-    }
-
-    private String[][] initiateRollArray(String[][] rolls) {
-        for (int i = 0; i < rolls.length; i++){
-            rolls[i][0] = "";
-            rolls[i][1] = "0";
-        }
-        return rolls;
+        return rollList;
     }
 }

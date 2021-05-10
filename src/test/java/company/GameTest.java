@@ -54,4 +54,9 @@ class GameTest {
     void calculateScoreSomeStrikes() {
         assertEquals(60, game.calculateScore("1212x12121212x12x12"));
     }
+
+    @Test
+    void calculateScoreSpareAndStrikesAndNormalValues() {
+        assertEquals(118, game.calculateScore("1-12x2/-/2127x1/x1/"));
+    }
 }
